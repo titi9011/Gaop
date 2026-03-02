@@ -1,0 +1,25 @@
+# ============================================================
+# Unreal Engine 5 — .gitignore
+# Fichiers générés, ignorés — binaires trackés via Git LFS
+# ============================================================
+
+# Dossiers générés (reconstruits par UE/VS)
+Binaries/
+Build/
+Intermediate/
+DerivedDataCache/
+Saved/
+
+# Visual Studio
+*.sln
+*.suo
+*.user
+*.VC.db
+*.VC.opendb
+.vs/
+
+# macOS
+.DS_Store
+
+# Fichier personnel Claude Code (non pertinent pour le repo)
+CLAUDE.md
