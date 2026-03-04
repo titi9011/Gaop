@@ -14,7 +14,8 @@ public class Goap : ModuleRules
 		PublicDependencyModuleNames.AddRange(new string[] {
 			"Core", "CoreUObject", "Engine", "InputCore",
 			"HeadMountedDisplay", "EnhancedInput",
-			"AIModule",   // AAIController
+			"AIModule",                  // AAIController
+			"ProceduralMeshComponent",   // ARoadGenerator
 		});
 	}
 }
