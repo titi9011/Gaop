@@ -46,7 +46,7 @@ public:
 
 	/** Espacement entre nœuds (cm) */
 	UPROPERTY(EditAnywhere, Category="Road|Grid")
-	float BlockSize = 2000.f;
+	float BlockSize = 10000.f;
 
 	/** Largeur de route (cm) */
 	UPROPERTY(EditAnywhere, Category="Road|Grid")

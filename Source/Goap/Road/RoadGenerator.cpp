@@ -148,7 +148,7 @@ void ARoadGenerator::BuildRoadMesh()
 		return;
 	}
 
-	RoadMesh->CreateMeshSection(0, Verts, Tris, Normals, UVs, Colors, Tangents, /*bCreateCollision=*/false);
+	RoadMesh->CreateMeshSection(0, Verts, Tris, Normals, UVs, Colors, Tangents, /*bCreateCollision=*/true);
 
 	if (RoadMaterial)
 		RoadMesh->SetMaterial(0, RoadMaterial);
@@ -193,58 +193,81 @@ void ARoadGenerator::SpawnTrafficLights()
 	int32 LightCount = 0;
 	const int32 Cols = GridWidth  + 1;
 	const int32 Rows = GridHeight + 1;
+	const float HW   = RoadWidth * 0.5f + 30.f; // demi-largeur + marge
 
-	// Tous les nœuds : coins exclus, bords = 1 feu, intérieurs = 2 feux
+	// Feux aux coins des intersections (conduite à droite)
+	// Chaque feu est placé au coin à droite de la voie d'approche.
+	//
+	//   NW ──────── NE          NW = feu pour trafic venant du Nord (Y+→Y-)
+	//   │          │           NE = feu pour trafic venant de l'Est (X+→X-)
+	//   │  Center  │           SE = feu pour trafic venant du Sud (Y-→Y+)
+	//   │          │           SW = feu pour trafic venant de l'Ouest (X-→X+)
+	//   SW ──────── SE
+	//
+	// GroupA (horizontal X) = SW + NE
+	// GroupB (vertical   Y) = NW + SE
+
 	for (int32 j = 0; j < Rows; ++j)
 	{
 		for (int32 i = 0; i < Cols; ++i)
 		{
-			// Route traversante H = nœud non-extrémité horizontalement
 			const bool bHasHorizontal = (i > 0) && (i < GridWidth);
-			// Route traversante V = nœud non-extrémité verticalement
 			const bool bHasVertical   = (j > 0) && (j < GridHeight);
 
-			// Coin (2 connexions) → pas d'intersection réelle, on passe
 			if (!bHasHorizontal && !bHasVertical) continue;
 
 			const FVector Center = Nodes[NodeIndex(i, j)].Location;
-			const float   Offset = RoadWidth * 0.5f + 30.f;
 
-			ATrafficLight* LightX = nullptr;
-			ATrafficLight* LightY = nullptr;
+			ATrafficLight* LightSW = nullptr; // trafic X+ (vient de l'Ouest)
+			ATrafficLight* LightNE = nullptr; // trafic X- (vient de l'Est)
+			ATrafficLight* LightNW = nullptr; // trafic Y- (vient du Nord)
+			ATrafficLight* LightSE = nullptr; // trafic Y+ (vient du Sud)
 
-			// Feu axe X (bloque le flux horizontal) — Yaw = 180°
 			if (bHasHorizontal)
 			{
-				FTransform TX(FRotator(0.f, 180.f, 0.f),
-				              Center + FVector(0.f, -Offset, 80.f));
-				LightX = GetWorld()->SpawnActor<ATrafficLight>(TrafficLightClass, TX, Params);
+				// SW : coin bas-gauche, face au trafic allant vers X+ (Yaw=0°)
+				FTransform TSW(FRotator(0.f, 0.f, 0.f),
+				               Center + FVector(-HW, -HW, 80.f));
+				LightSW = GetWorld()->SpawnActor<ATrafficLight>(TrafficLightClass, TSW, Params);
+
+				// NE : coin haut-droit, face au trafic allant vers X- (Yaw=180°)
+				FTransform TNE(FRotator(0.f, 180.f, 0.f),
+				               Center + FVector(HW, HW, 80.f));
+				LightNE = GetWorld()->SpawnActor<ATrafficLight>(TrafficLightClass, TNE, Params);
 			}
 
-			// Feu axe Y (bloque le flux vertical) — Yaw = 90°
 			if (bHasVertical)
 			{
-				FTransform TY(FRotator(0.f, 90.f, 0.f),
-				              Center + FVector(Offset, 0.f, 80.f));
-				LightY = GetWorld()->SpawnActor<ATrafficLight>(TrafficLightClass, TY, Params);
+				// NW : coin haut-gauche, face au trafic allant vers Y- (Yaw=270°)
+				FTransform TNW(FRotator(0.f, 270.f, 0.f),
+				               Center + FVector(-HW, HW, 80.f));
+				LightNW = GetWorld()->SpawnActor<ATrafficLight>(TrafficLightClass, TNW, Params);
+
+				// SE : coin bas-droit, face au trafic allant vers Y+ (Yaw=90°)
+				FTransform TSE(FRotator(0.f, 90.f, 0.f),
+				               Center + FVector(HW, -HW, 80.f));
+				LightSE = GetWorld()->SpawnActor<ATrafficLight>(TrafficLightClass, TSE, Params);
 			}
 
-			// Manager coordonnant les feux (GroupB vide = OK pour les bords)
+			// Manager coordonnant les feux
 			FTransform TM(FRotator::ZeroRotator, Center);
 			ATrafficLightManager* Manager = GetWorld()->SpawnActor<ATrafficLightManager>(
 				TrafficLightManagerClass, TM, Params);
 
 			if (Manager)
 			{
-				if (LightX) Manager->GroupA.Add(LightX);
-				if (LightY) Manager->GroupB.Add(LightY);
+				if (LightSW) Manager->GroupA.Add(LightSW);
+				if (LightNE) Manager->GroupA.Add(LightNE);
+				if (LightNW) Manager->GroupB.Add(LightNW);
+				if (LightSE) Manager->GroupB.Add(LightSE);
 			}
 
 			++LightCount;
 		}
 	}
 
-	UE_LOG(LogTemp, Log, TEXT("[RoadGenerator] Feux: %d intersections"), LightCount);
+	UE_LOG(LogTemp, Log, TEXT("[RoadGenerator] Feux: %d intersections (%d feux aux coins)"),
+		LightCount, LightCount * 4);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
