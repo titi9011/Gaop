@@ -50,7 +50,7 @@ public:
 
 	/** Largeur de route (cm) */
 	UPROPERTY(EditAnywhere, Category="Road|Grid")
-	float RoadWidth = 350.f;
+	float RoadWidth = 1000.f;
 
 	// ── Feux de circulation ─────────────────────────────────────────────────
 	UPROPERTY(EditAnywhere, Category="Road|TrafficLights")

@@ -191,34 +191,53 @@ void ARoadGenerator::SpawnTrafficLights()
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 	int32 LightCount = 0;
+	const int32 Cols = GridWidth  + 1;
+	const int32 Rows = GridHeight + 1;
 
-	// Nœuds intérieurs uniquement : 1 ≤ i < GridWidth && 1 ≤ j < GridHeight
-	for (int32 j = 1; j < GridHeight; ++j)
+	// Tous les nœuds : coins exclus, bords = 1 feu, intérieurs = 2 feux
+	for (int32 j = 0; j < Rows; ++j)
 	{
-		for (int32 i = 1; i < GridWidth; ++i)
+		for (int32 i = 0; i < Cols; ++i)
 		{
+			// Route traversante H = nœud non-extrémité horizontalement
+			const bool bHasHorizontal = (i > 0) && (i < GridWidth);
+			// Route traversante V = nœud non-extrémité verticalement
+			const bool bHasVertical   = (j > 0) && (j < GridHeight);
+
+			// Coin (2 connexions) → pas d'intersection réelle, on passe
+			if (!bHasHorizontal && !bHasVertical) continue;
+
 			const FVector Center = Nodes[NodeIndex(i, j)].Location;
 			const float   Offset = RoadWidth * 0.5f + 30.f;
 
-			// Feu axe X (Est-Ouest) — Yaw = 180°
-			FTransform TX(FRotator(0.f, 180.f, 0.f),
-			              Center + FVector(0.f, -Offset, 80.f));
-			ATrafficLight* LightX = GetWorld()->SpawnActor<ATrafficLight>(TrafficLightClass, TX, Params);
+			ATrafficLight* LightX = nullptr;
+			ATrafficLight* LightY = nullptr;
 
-			// Feu axe Y (Nord-Sud) — Yaw = 90°
-			FTransform TY(FRotator(0.f, 90.f, 0.f),
-			              Center + FVector(Offset, 0.f, 80.f));
-			ATrafficLight* LightY = GetWorld()->SpawnActor<ATrafficLight>(TrafficLightClass, TY, Params);
+			// Feu axe X (bloque le flux horizontal) — Yaw = 180°
+			if (bHasHorizontal)
+			{
+				FTransform TX(FRotator(0.f, 180.f, 0.f),
+				              Center + FVector(0.f, -Offset, 80.f));
+				LightX = GetWorld()->SpawnActor<ATrafficLight>(TrafficLightClass, TX, Params);
+			}
 
-			// Manager coordonnant les deux feux
-			FTransform TM(FRotator::ZeroRotator, Center + FVector(0.f, 0.f, 0.f));
+			// Feu axe Y (bloque le flux vertical) — Yaw = 90°
+			if (bHasVertical)
+			{
+				FTransform TY(FRotator(0.f, 90.f, 0.f),
+				              Center + FVector(Offset, 0.f, 80.f));
+				LightY = GetWorld()->SpawnActor<ATrafficLight>(TrafficLightClass, TY, Params);
+			}
+
+			// Manager coordonnant les feux (GroupB vide = OK pour les bords)
+			FTransform TM(FRotator::ZeroRotator, Center);
 			ATrafficLightManager* Manager = GetWorld()->SpawnActor<ATrafficLightManager>(
 				TrafficLightManagerClass, TM, Params);
 
 			if (Manager)
 			{
-				Manager->GroupA.Add(LightX);
-				Manager->GroupB.Add(LightY);
+				if (LightX) Manager->GroupA.Add(LightX);
+				if (LightY) Manager->GroupB.Add(LightY);
 			}
 
 			++LightCount;
