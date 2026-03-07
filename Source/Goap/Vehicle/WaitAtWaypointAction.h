@@ -22,7 +22,7 @@ public:
 
 	/** Durée d'attente en secondes */
 	UPROPERTY(EditDefaultsOnly, Category="GOAP|Wait")
-	float WaitDuration = 2.f;
+	float WaitDuration = 0.f;
 
 	virtual void Activate(AActor* Agent) override;
 	virtual void Tick(float DeltaTime, AActor* Agent) override;

@@ -58,6 +58,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="GOAP|Traffic")
 	float TrafficLightDetectionRadius = 1500.f;
 
+	/** Distance en avant minimale (cm) pour réagir à un feu. Si le feu est plus proche que
+	 *  cette valeur dans la direction de conduite, la voiture est déjà engagée dans l'intersection. */
+	UPROPERTY(EditDefaultsOnly, Category="GOAP|Traffic")
+	float TrafficLightMinForwardDistance = 500.f;
+
 private:
 	void BuildActions();
 	void TickCurrentAction(float DeltaTime);

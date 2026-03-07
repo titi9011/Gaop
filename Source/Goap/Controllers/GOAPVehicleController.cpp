@@ -150,11 +150,18 @@ bool AGOAPVehicleController::HasNearbyRedLight() const
 	for (ATrafficLight* L : CachedTrafficLights)
 	{
 		if (!L || !L->IsBlockingTraffic()) continue;
-		if (FVector::DistSquared(VehicleLocation, L->GetActorLocation()) > R2) continue;
 
-		// Le feu doit être devant la voiture
-		const FVector ToLight = (L->GetActorLocation() - VehicleLocation).GetSafeNormal2D();
-		if (FVector::DotProduct(VehicleForward, ToLight) < 0.3f) continue;
+		const FVector ToLight = L->GetActorLocation() - VehicleLocation;
+		if (ToLight.SizeSquared2D() > R2) continue; // trop loin
+
+		// Distance EN AVANT : projection du vecteur vers le feu sur le forward de la voiture.
+		// Si le feu est derrière ou trop proche devant, la voiture est déjà engagée → ignorer.
+		const float ForwardDist = FVector::DotProduct(ToLight, VehicleForward);
+		if (ForwardDist < TrafficLightMinForwardDistance) continue;
+
+		// Le feu doit être devant la voiture (angle)
+		const FVector ToLightDir = ToLight.GetSafeNormal2D();
+		if (FVector::DotProduct(VehicleForward, ToLightDir) < 0.3f) continue;
 
 		// Le feu doit pointer vers la voiture (seuil strict pour ignorer les feux perpendiculaires)
 		const FVector LightForward = L->GetActorForwardVector().GetSafeNormal2D();

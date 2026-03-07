@@ -28,6 +28,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="GOAP|Traffic")
 	float DetectionRadius = 1500.f;
 
+	/** Distance en avant minimale (cm) — en-dessous, la voiture est déjà engagée */
+	UPROPERTY(EditDefaultsOnly, Category="GOAP|Traffic")
+	float MinForwardDistance = 500.f;
+
 	virtual bool CheckProcedural(AActor* Agent) override;
 	virtual void Activate(AActor* Agent) override;
 	virtual void Tick(float DeltaTime, AActor* Agent) override;
