@@ -193,7 +193,7 @@ void ARoadGenerator::SpawnTrafficLights()
 	int32 LightCount = 0;
 	const int32 Cols = GridWidth  + 1;
 	const int32 Rows = GridHeight + 1;
-	const float HW   = RoadWidth * 0.5f + 30.f; // demi-largeur + marge
+	const float HW   = RoadWidth * 0.5f; // demi-largeur = bord de la route
 
 	// Feux aux coins des intersections (conduite à droite)
 	// Chaque feu est placé au coin à droite de la voie d'approche.
@@ -227,12 +227,12 @@ void ARoadGenerator::SpawnTrafficLights()
 			{
 				// SW : coin bas-gauche, face au trafic allant vers X+ (Yaw=0°)
 				FTransform TSW(FRotator(0.f, 0.f, 0.f),
-				               Center + FVector(-HW, -HW, 80.f));
+				               Center + FVector(-HW, -HW, 0.f));
 				LightSW = GetWorld()->SpawnActor<ATrafficLight>(TrafficLightClass, TSW, Params);
 
 				// NE : coin haut-droit, face au trafic allant vers X- (Yaw=180°)
 				FTransform TNE(FRotator(0.f, 180.f, 0.f),
-				               Center + FVector(HW, HW, 80.f));
+				               Center + FVector(HW, HW, 0.f));
 				LightNE = GetWorld()->SpawnActor<ATrafficLight>(TrafficLightClass, TNE, Params);
 			}
 
@@ -240,12 +240,12 @@ void ARoadGenerator::SpawnTrafficLights()
 			{
 				// NW : coin haut-gauche, face au trafic allant vers Y- (Yaw=270°)
 				FTransform TNW(FRotator(0.f, 270.f, 0.f),
-				               Center + FVector(-HW, HW, 80.f));
+				               Center + FVector(-HW, HW, 0.f));
 				LightNW = GetWorld()->SpawnActor<ATrafficLight>(TrafficLightClass, TNW, Params);
 
 				// SE : coin bas-droit, face au trafic allant vers Y+ (Yaw=90°)
 				FTransform TSE(FRotator(0.f, 90.f, 0.f),
-				               Center + FVector(HW, -HW, 80.f));
+				               Center + FVector(HW, -HW, 0.f));
 				LightSE = GetWorld()->SpawnActor<ATrafficLight>(TrafficLightClass, TSE, Params);
 			}
 
