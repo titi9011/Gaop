@@ -9,7 +9,7 @@ void ATrafficLightManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	CurrentPhase = 0;
+	CurrentPhase = FMath::RandRange(0, 3);
 	ApplyPhase();
 	AdvancePhase();
 }

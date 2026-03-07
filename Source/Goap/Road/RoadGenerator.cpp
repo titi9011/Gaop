@@ -4,14 +4,41 @@
 #include "Engine/TargetPoint.h"
 #include "EngineUtils.h"           // TActorIterator
 #include "Engine/World.h"
+#include "DrawDebugHelpers.h"
 
 ARoadGenerator::ARoadGenerator()
 {
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 
 	RoadMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("RoadMesh"));
 	RootComponent = RoadMesh;
 	RoadMesh->bUseAsyncCooking = true;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tick — debug draw
+// ─────────────────────────────────────────────────────────────────────────────
+
+void ARoadGenerator::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	if (!bShowStopZones) return;
+
+	for (ATrafficLight* Light : SpawnedTrafficLights)
+	{
+		if (!Light) continue;
+
+		const FColor Color = Light->IsBlockingTraffic() ? FColor::Red : FColor::Green;
+		DrawDebugSphere(GetWorld(), Light->GetActorLocation(), StopZoneRadius,
+		                16, Color, false, -1.f, 0, 5.f);
+
+		// Petite flèche indiquant l'orientation du feu
+		DrawDebugDirectionalArrow(GetWorld(),
+		                          Light->GetActorLocation(),
+		                          Light->GetActorLocation() + Light->GetActorForwardVector() * 200.f,
+		                          50.f, Color, false, -1.f, 0, 5.f);
+	}
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -189,6 +216,8 @@ void ARoadGenerator::SpawnTrafficLights()
 		return;
 	}
 
+	SpawnedTrafficLights.Reset();
+
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
@@ -263,6 +292,11 @@ void ARoadGenerator::SpawnTrafficLights()
 				if (LightNW) Manager->GroupB.Add(LightNW);
 				if (LightSE) Manager->GroupB.Add(LightSE);
 			}
+
+			if (LightSW) SpawnedTrafficLights.Add(LightSW);
+			if (LightNE) SpawnedTrafficLights.Add(LightNE);
+			if (LightNW) SpawnedTrafficLights.Add(LightNW);
+			if (LightSE) SpawnedTrafficLights.Add(LightSE);
 
 			++LightCount;
 		}

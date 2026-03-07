@@ -34,6 +34,7 @@ public:
 	ARoadGenerator();
 
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 
 	// ── Paramètres de grille ────────────────────────────────────────────────
 	/** Nombre de blocs horizontaux */
@@ -71,6 +72,15 @@ public:
 	UPROPERTY(EditAnywhere, Category="Road|Visual")
 	UMaterialInterface* RoadMaterial = nullptr;
 
+	// ── Debug ────────────────────────────────────────────────────────────────
+	/** Affiche les zones d'arrêt des voitures autour de chaque feu (debug) */
+	UPROPERTY(EditAnywhere, Category="Road|Debug")
+	bool bShowStopZones = false;
+
+	/** Rayon des zones d'arrêt (doit correspondre à TrafficLightDetectionRadius des véhicules) */
+	UPROPERTY(EditAnywhere, Category="Road|Debug", meta=(EditCondition="bShowStopZones"))
+	float StopZoneRadius = 1500.f;
+
 	// ── Accès aux routes ────────────────────────────────────────────────────
 	/** Route périmétrique clockwise (coins + bords) */
 	UFUNCTION(BlueprintCallable, Category="Road")
@@ -93,8 +103,9 @@ private:
 	UProceduralMeshComponent* RoadMesh;
 
 	// Données internes
-	TArray<FRoadNode> Nodes;
-	TArray<AActor*>   SpawnedWaypoints;
+	TArray<FRoadNode>    Nodes;
+	TArray<AActor*>      SpawnedWaypoints;
+	TArray<ATrafficLight*> SpawnedTrafficLights;
 
 	// Index dans Nodes : colonne i, ligne j
 	int32 NodeIndex(int32 i, int32 j) const { return i + j * (GridWidth + 1); }

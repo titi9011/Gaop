@@ -73,19 +73,24 @@ ATrafficLight* UWaitForGreenLightAction::FindNearestBlockingLight(AActor* Agent)
 	ATrafficLight* Nearest      = nullptr;
 	float          NearestDistSq = DetectionRadius * DetectionRadius;
 
-	const FVector VehicleForward = Agent->GetActorForwardVector().GetSafeNormal2D();
+	const FVector VehicleForward  = Agent->GetActorForwardVector().GetSafeNormal2D();
+	const FVector VehicleLocation = Agent->GetActorLocation();
 
 	for (AActor* A : Found)
 	{
 		ATrafficLight* Light = Cast<ATrafficLight>(A);
 		if (!Light || !Light->IsBlockingTraffic()) continue;
 
-		// Ne bloquer que si la voiture fait face au feu (directions opposées → dot < 0)
-		// Si le feu pointe dans la même direction que la voiture, on l'ignore
-		const FVector LightForward = Light->GetActorForwardVector().GetSafeNormal2D();
-		if (FVector::DotProduct(VehicleForward, LightForward) > 0.f) continue;
+		// Le feu doit être devant la voiture
+		const FVector ToLight = (Light->GetActorLocation() - VehicleLocation).GetSafeNormal2D();
+		if (FVector::DotProduct(VehicleForward, ToLight) < 0.3f) continue;
 
-		float DistSq = FVector::DistSquared(Agent->GetActorLocation(), Light->GetActorLocation());
+		// Le feu doit pointer vers la voiture (directions opposées → dot < -0.5)
+		// Seuil strict pour ignorer les feux perpendiculaires (intersections)
+		const FVector LightForward = Light->GetActorForwardVector().GetSafeNormal2D();
+		if (FVector::DotProduct(VehicleForward, LightForward) > -0.5f) continue;
+
+		float DistSq = FVector::DistSquared(VehicleLocation, Light->GetActorLocation());
 		if (DistSq <= NearestDistSq)
 		{
 			NearestDistSq = DistSq;
