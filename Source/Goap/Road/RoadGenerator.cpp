@@ -1,5 +1,7 @@
 #include "Road/RoadGenerator.h"
 #include "Vehicle/GOAPVehicle.h"
+#include "Controllers/GOAPVehicleController.h"
+#include "Engine/TargetPoint.h"
 #include "EngineUtils.h"           // TActorIterator
 #include "Engine/World.h"
 
@@ -148,7 +150,7 @@ void ARoadGenerator::BuildRoadMesh()
 		return;
 	}
 
-	RoadMesh->CreateMeshSection(0, Verts, Tris, Normals, UVs, Colors, Tangents, /*bCreateCollision=*/true);
+	RoadMesh->CreateMeshSection(0, Verts, Tris, Normals, UVs, Colors, Tangents, /*bCreateCollision=*/false);
 
 	if (RoadMaterial)
 		RoadMesh->SetMaterial(0, RoadMaterial);
@@ -168,8 +170,8 @@ void ARoadGenerator::SpawnWaypoints()
 
 	for (int32 idx = 0; idx < Nodes.Num(); ++idx)
 	{
-		FTransform T(FRotator::ZeroRotator, Nodes[idx].Location);
-		AActor* WP = GetWorld()->SpawnActor<AActor>(AActor::StaticClass(), T, Params);
+		ATargetPoint* WP = GetWorld()->SpawnActor<ATargetPoint>(ATargetPoint::StaticClass(),
+			Nodes[idx].Location, FRotator::ZeroRotator, Params);
 		SpawnedWaypoints[idx] = WP;
 	}
 }
@@ -293,14 +295,25 @@ int32 ARoadGenerator::FindNearestWaypointIndex(AGOAPVehicle* Vehicle,
 void ARoadGenerator::AssignVehicleRoutes()
 {
 	TArray<AActor*> Route = GetPerimeterRoute();
+	UE_LOG(LogTemp, Warning, TEXT("[RoadGenerator] AssignVehicleRoutes — %d waypoints dans le périmètre"), Route.Num());
 	if (Route.IsEmpty()) return;
 
+	int32 VehicleCount = 0;
 	for (TActorIterator<AGOAPVehicle> It(GetWorld()); It; ++It)
 	{
 		AGOAPVehicle* V = *It;
 		V->Waypoints = Route;
 		V->CurrentWaypointIndex = FindNearestWaypointIndex(V, Route);
+		++VehicleCount;
+
+		// Mettre à jour le cache des feux et forcer un replan
+		if (AGOAPVehicleController* C = Cast<AGOAPVehicleController>(V->GetController()))
+		{
+			C->RebuildTrafficLightCache();
+			C->Replan();
+		}
 	}
+	UE_LOG(LogTemp, Warning, TEXT("[RoadGenerator] %d véhicule(s) trouvé(s) et assignés"), VehicleCount);
 }
 
 void ARoadGenerator::ForceAssignRoutes()

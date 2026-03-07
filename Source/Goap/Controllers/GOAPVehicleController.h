@@ -28,6 +28,12 @@ public:
 	virtual void OnPossess(APawn* InPawn) override;
 	virtual void Tick(float DeltaTime) override;
 
+	/** Relance la planification (appelable par des systèmes externes comme RoadGenerator) */
+	void Replan();
+
+	/** Reconstruit le cache des feux (à appeler après leur spawn par le RoadGenerator) */
+	void RebuildTrafficLightCache();
+
 protected:
 	/** État du monde désiré (but à atteindre) */
 	FWorldState GoalState;
@@ -54,7 +60,6 @@ protected:
 
 private:
 	void BuildActions();
-	void Replan();
 	void TickCurrentAction(float DeltaTime);
 
 	/** Cache des feux de la scène (rempli à OnPossess) */

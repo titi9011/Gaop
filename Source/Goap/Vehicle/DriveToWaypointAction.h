@@ -35,4 +35,5 @@ public:
 
 private:
 	bool bFinished = false;
+	bool bLoggedOnce = false;
 };

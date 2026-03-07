@@ -17,6 +17,8 @@ void AGOAPVehicleController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 
+	UE_LOG(LogTemp, Warning, TEXT("[GOAPVehicleController] OnPossess: %s"), *GetNameSafe(InPawn));
+
 	// But : on veut que l'agent soit "Resting" (arrivé et ayant attendu)
 	GoalState.Set("Resting", true);
 
@@ -43,6 +45,16 @@ void AGOAPVehicleController::BuildActions()
 	AvailableActions.Add(NewObject<UDriveToWaypointAction>(this));
 	AvailableActions.Add(NewObject<UWaitAtWaypointAction>(this));
 	AvailableActions.Add(NewObject<UWaitForGreenLightAction>(this));
+}
+
+void AGOAPVehicleController::RebuildTrafficLightCache()
+{
+	CachedTrafficLights.Reset();
+	TArray<AActor*> Found;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ATrafficLight::StaticClass(), Found);
+	for (AActor* A : Found)
+		if (ATrafficLight* L = Cast<ATrafficLight>(A))
+			CachedTrafficLights.Add(L);
 }
 
 void AGOAPVehicleController::Replan()
@@ -76,6 +88,14 @@ void AGOAPVehicleController::Tick(float DeltaTime)
 
 void AGOAPVehicleController::TickCurrentAction(float DeltaTime)
 {
+	static bool bTickLogged = false;
+	if (!bTickLogged)
+	{
+		bTickLogged = true;
+		UE_LOG(LogTemp, Warning, TEXT("[GOAPVehicleController] TickCurrentAction — PlanSize=%d ActionIndex=%d bActionActive=%d"),
+			CurrentPlan.Num(), CurrentActionIndex, bActionActive ? 1 : 0);
+	}
+
 	// Plan épuisé → boucle : remet à zéro et replanifie
 	if (!CurrentPlan.IsValidIndex(CurrentActionIndex))
 	{

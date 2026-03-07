@@ -11,6 +11,7 @@ UDriveToWaypointAction::UDriveToWaypointAction()
 void UDriveToWaypointAction::Activate(AActor* Agent)
 {
 	bFinished = false;
+	bLoggedOnce = false;
 }
 
 void UDriveToWaypointAction::Tick(float DeltaTime, AActor* Agent)
@@ -19,7 +20,19 @@ void UDriveToWaypointAction::Tick(float DeltaTime, AActor* Agent)
 	if (!Vehicle) { bFinished = true; return; }
 
 	FVector Target = Vehicle->GetCurrentWaypointLocation();
-	if (Target.IsZero()) { bFinished = true; return; }
+
+	if (!bLoggedOnce)
+	{
+		bLoggedOnce = true;
+		FVector Pos = Vehicle->GetActorLocation();
+		UE_LOG(LogTemp, Warning, TEXT("[DriveToWP] Pos=(%.0f,%.0f,%.0f) Target=(%.0f,%.0f,%.0f) IsZero=%d WPIndex=%d WPCount=%d WP[0]Valid=%d"),
+			Pos.X, Pos.Y, Pos.Z, Target.X, Target.Y, Target.Z,
+			Target.IsZero() ? 1 : 0,
+			Vehicle->CurrentWaypointIndex, Vehicle->Waypoints.Num(),
+			(Vehicle->Waypoints.Num() > 0 && Vehicle->Waypoints[0] != nullptr) ? 1 : 0);
+	}
+
+	if (Target.IsZero()) return; // waypoints pas encore assignés — attendre
 
 	// ── Arrivée ? ───────────────────────────────────────────────────────────
 	float DistSq = FVector::DistSquared2D(Vehicle->GetActorLocation(), Target);
