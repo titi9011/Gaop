@@ -34,14 +34,21 @@ void UDriveToWaypointAction::Tick(float DeltaTime, AActor* Agent)
 
 	if (Target.IsZero()) return; // waypoints pas encore assignés — attendre
 
-	// ── Arrivée ? ───────────────────────────────────────────────────────────
+	// ── Arrivée au waypoint courant ? ──────────────────────────────────────
 	float DistSq = FVector::DistSquared2D(Vehicle->GetActorLocation(), Target);
 	float Accept = Vehicle->WaypointAcceptRadius;
 	if (DistSq <= Accept * Accept)
 	{
-		Vehicle->SetThrottle(0.f);
-		Vehicle->SetSteering(0.f);
-		bFinished = true;
+		if (Vehicle->HasReachedDestination())
+		{
+			// Destination finale atteinte — action terminée
+			Vehicle->SetThrottle(0.f);
+			Vehicle->SetSteering(0.f);
+			bFinished = true;
+			return;
+		}
+		// Waypoint intermédiaire — avancer vers la destination
+		Vehicle->AdvanceTowardDestination();
 		return;
 	}
 

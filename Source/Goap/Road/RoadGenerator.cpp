@@ -338,6 +338,7 @@ void ARoadGenerator::AssignVehicleRoutes()
 		AGOAPVehicle* V = *It;
 		V->Waypoints = Route;
 		V->CurrentWaypointIndex = FindNearestWaypointIndex(V, Route);
+		V->PickRandomDestination();  // choisit une destination initiale aléatoire
 		++VehicleCount;
 
 		// Mettre à jour le cache des feux et forcer un replan

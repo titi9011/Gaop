@@ -27,9 +27,9 @@ void UWaitAtWaypointAction::Tick(float DeltaTime, AActor* Agent)
 
 	if (ElapsedTime >= WaitDuration)
 	{
-		// Passer au waypoint suivant avant de signaler la fin
+		// Choisir une nouvelle destination aléatoire avant de signaler la fin
 		if (AGOAPVehicle* Vehicle = Cast<AGOAPVehicle>(Agent))
-			Vehicle->AdvanceWaypoint();
+			Vehicle->PickRandomDestination();
 
 		bFinished = true;
 	}

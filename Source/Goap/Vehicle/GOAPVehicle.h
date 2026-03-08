@@ -49,9 +49,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="Vehicle|Patrol")
 	float WaypointAcceptRadius = 250.f;
 
-	/** Index du waypoint actuel (géré par le controller) */
-	UPROPERTY(VisibleInstanceOnly, Category="Vehicle|Patrol")
+	/** Index du waypoint où se trouve actuellement le véhicule */
+	UPROPERTY(VisibleInstanceOnly, Category="Vehicle|Navigation")
 	int32 CurrentWaypointIndex = 0;
+
+	/** Index du waypoint destination (choisi aléatoirement) */
+	UPROPERTY(VisibleInstanceOnly, Category="Vehicle|Navigation")
+	int32 DestinationWaypointIndex = 0;
 
 	// ── Interface pour les actions GOAP ─────────────────────────────────────
 	/** Applique une entrée d'accélération [-1,1] (négatif = frein/marche arrière) */
@@ -60,8 +64,14 @@ public:
 	/** Applique une entrée de direction [-1,1] (négatif = gauche) */
 	void SetSteering(float Value);
 
-	/** Avance au waypoint suivant en bouclant */
-	void AdvanceWaypoint();
+	/** Avance d'un pas vers la destination (circulairement) */
+	void AdvanceTowardDestination();
+
+	/** Choisit une destination aléatoire parmi les waypoints (≠ courant) */
+	void PickRandomDestination();
+
+	/** Vrai si le véhicule est arrivé à sa destination */
+	bool HasReachedDestination() const;
 
 	/** Retourne la position du waypoint actuel, ou ZeroVector si aucun */
 	FVector GetCurrentWaypointLocation() const;

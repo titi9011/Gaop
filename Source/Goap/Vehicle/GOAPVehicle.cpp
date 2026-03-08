@@ -46,10 +46,29 @@ void AGOAPVehicle::SetSteering(float Value)
 	CurrentSteering = FMath::Clamp(Value, -1.f, 1.f);
 }
 
-void AGOAPVehicle::AdvanceWaypoint()
+void AGOAPVehicle::AdvanceTowardDestination()
 {
-	if (Waypoints.Num() > 0)
+	if (Waypoints.Num() > 1)
 		CurrentWaypointIndex = (CurrentWaypointIndex + 1) % Waypoints.Num();
+}
+
+void AGOAPVehicle::PickRandomDestination()
+{
+	const int32 N = Waypoints.Num();
+	if (N <= 1) return;
+
+	int32 New = FMath::RandRange(0, N - 1);
+	// Garantit une destination différente de la position courante
+	if (New == CurrentWaypointIndex)
+		New = (New + 1) % N;
+	DestinationWaypointIndex = New;
+
+	UE_LOG(LogTemp, Log, TEXT("[GOAPVehicle] Nouvelle destination : waypoint %d"), DestinationWaypointIndex);
+}
+
+bool AGOAPVehicle::HasReachedDestination() const
+{
+	return CurrentWaypointIndex == DestinationWaypointIndex;
 }
 
 FVector AGOAPVehicle::GetCurrentWaypointLocation() const
