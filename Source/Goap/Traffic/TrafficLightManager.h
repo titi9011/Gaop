@@ -12,6 +12,11 @@
  *   Phase 2 : GroupA=Rouge, GroupB=Vert
  *   Phase 3 : GroupA=Rouge, GroupB=Jaune
  *
+ * Groupement (généré par RoadGenerator) :
+ *   GroupA = SW + NW  (côté gauche de l'intersection)
+ *   GroupB = NE + SE  (côté droit)
+ *   → feux diagonalement opposés montrent des couleurs contraires.
+ *
  * Placer dans le niveau et assigner les feux dans GroupA / GroupB depuis l'éditeur.
  */
 UCLASS()

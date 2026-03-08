@@ -288,8 +288,8 @@ void ARoadGenerator::SpawnTrafficLights()
 			if (Manager)
 			{
 				if (LightSW) Manager->GroupA.Add(LightSW);
-				if (LightNE) Manager->GroupA.Add(LightNE);
-				if (LightNW) Manager->GroupB.Add(LightNW);
+				if (LightNW) Manager->GroupA.Add(LightNW);
+				if (LightNE) Manager->GroupB.Add(LightNE);
 				if (LightSE) Manager->GroupB.Add(LightSE);
 			}
 
