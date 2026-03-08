@@ -28,6 +28,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category="GOAP|Drive")
 	float BaseThrottle = 0.75f;
 
+	/** Décalage latéral vers la droite (cm) pour conduire à droite de la route */
+	UPROPERTY(EditDefaultsOnly, Category="GOAP|Drive")
+	float LateralOffset = 200.f;
+
 	virtual void Activate(AActor* Agent) override;
 	virtual void Tick(float DeltaTime, AActor* Agent) override;
 	virtual bool IsFinished(AActor* Agent) override;

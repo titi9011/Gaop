@@ -47,14 +47,21 @@ void UDriveToWaypointAction::Tick(float DeltaTime, AActor* Agent)
 
 	// ── Direction vers la cible (en 2D, ignore Z) ───────────────────────────
 	FVector ToTarget = (Target - Vehicle->GetActorLocation()).GetSafeNormal2D();
-	FVector Forward  = Vehicle->GetActorForwardVector().GetSafeNormal2D();
+
+	// Conduite à droite : décaler la cible de steering vers la droite du vecteur de marche.
+	// Droite du vecteur (dx,dy) en 2D UE = (-dy, dx, 0)
+	FVector RightOfTravel  = FVector(-ToTarget.Y, ToTarget.X, 0.f);
+	FVector AdjustedTarget = Target + RightOfTravel * LateralOffset;
+	FVector ToAdjusted     = (AdjustedTarget - Vehicle->GetActorLocation()).GetSafeNormal2D();
+
+	FVector Forward = Vehicle->GetActorForwardVector().GetSafeNormal2D();
 
 	// CrossProduct Z → positif = cible à droite, négatif = à gauche
-	float Cross = FVector::CrossProduct(Forward, ToTarget).Z;
+	float Cross = FVector::CrossProduct(Forward, ToAdjusted).Z;
 	float Steer = FMath::Clamp(Cross * SteeringGain, -1.f, 1.f);
 
-	// DotProduct → alignement avec la cible (1=droit, 0=perpendiculaire)
-	float Dot      = FVector::DotProduct(Forward, ToTarget);
+	// DotProduct → alignement avec la cible ajustée (1=droit, 0=perpendiculaire)
+	float Dot      = FVector::DotProduct(Forward, ToAdjusted);
 	float Throttle = BaseThrottle * FMath::Max(0.25f, Dot); // ralentir dans les virages
 
 	Vehicle->SetSteering(Steer);
