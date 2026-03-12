@@ -33,6 +33,22 @@ void AGOAPVehicleController::OnPossess(APawn* InPawn)
 		if (ATrafficLight* L = Cast<ATrafficLight>(A))
 			CachedTrafficLights.Add(L);
 
+	// Choisir une destination initiale aléatoire (seulement si les waypoints sont déjà assignés)
+	// Si la route est assignée par RoadGenerator, c'est lui qui appelle PickRandomDestination + Replan.
+	if (AGOAPVehicle* Vehicle = Cast<AGOAPVehicle>(InPawn))
+	{
+		if (Vehicle->Waypoints.Num() > 1)
+		{
+			Vehicle->PickRandomDestination();
+			AActor* DestWP = Vehicle->Waypoints.IsValidIndex(Vehicle->DestinationWaypointIndex)
+				? Vehicle->Waypoints[Vehicle->DestinationWaypointIndex] : nullptr;
+			UE_LOG(LogTemp, Warning, TEXT("[GOAPVehicle] %s → destination waypoint %d (%s)"),
+				*GetNameSafe(Vehicle),
+				Vehicle->DestinationWaypointIndex,
+				*GetNameSafe(DestWP));
+		}
+	}
+
 	BuildActions();
 	Replan();
 }

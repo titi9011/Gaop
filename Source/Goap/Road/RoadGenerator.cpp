@@ -328,27 +328,57 @@ int32 ARoadGenerator::FindNearestWaypointIndex(AGOAPVehicle* Vehicle,
 
 void ARoadGenerator::AssignVehicleRoutes()
 {
-	TArray<AActor*> Route = GetPerimeterRoute();
-	UE_LOG(LogTemp, Warning, TEXT("[RoadGenerator] AssignVehicleRoutes — %d waypoints dans le périmètre"), Route.Num());
-	if (Route.IsEmpty()) return;
+	// Construire un pool de routes variées : périmètre + lignes + colonnes
+	TArray<TArray<AActor*>> RoutePool;
+
+	TArray<AActor*> Perimeter = GetPerimeterRoute();
+	if (!Perimeter.IsEmpty())
+		RoutePool.Add(Perimeter);
+
+	for (int32 j = 0; j <= GridHeight; ++j)
+	{
+		TArray<AActor*> Row = GetRowRoute(j);
+		if (Row.Num() >= 2) RoutePool.Add(Row);
+	}
+
+	for (int32 i = 0; i <= GridWidth; ++i)
+	{
+		TArray<AActor*> Col = GetColumnRoute(i);
+		if (Col.Num() >= 2) RoutePool.Add(Col);
+	}
+
+	if (RoutePool.IsEmpty())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[RoadGenerator] AssignVehicleRoutes — aucune route disponible"));
+		return;
+	}
 
 	int32 VehicleCount = 0;
 	for (TActorIterator<AGOAPVehicle> It(GetWorld()); It; ++It)
 	{
 		AGOAPVehicle* V = *It;
-		V->Waypoints = Route;
-		V->CurrentWaypointIndex = FindNearestWaypointIndex(V, Route);
-		V->PickRandomDestination();  // choisit une destination initiale aléatoire
+
+		// Assigner une route différente par véhicule (round-robin)
+		const TArray<AActor*>& Route = RoutePool[VehicleCount % RoutePool.Num()];
+		V->Waypoints               = Route;
+		V->CurrentWaypointIndex    = FindNearestWaypointIndex(V, Route);
+		V->PickRandomDestination();
+
+		UE_LOG(LogTemp, Warning,
+			TEXT("[RoadGenerator] %s → route #%d (%d waypoints), départ WP %d, destination WP %d"),
+			*GetNameSafe(V), VehicleCount % RoutePool.Num(),
+			Route.Num(), V->CurrentWaypointIndex, V->DestinationWaypointIndex);
+
 		++VehicleCount;
 
-		// Mettre à jour le cache des feux et forcer un replan
 		if (AGOAPVehicleController* C = Cast<AGOAPVehicleController>(V->GetController()))
 		{
 			C->RebuildTrafficLightCache();
 			C->Replan();
 		}
 	}
-	UE_LOG(LogTemp, Warning, TEXT("[RoadGenerator] %d véhicule(s) trouvé(s) et assignés"), VehicleCount);
+	UE_LOG(LogTemp, Warning, TEXT("[RoadGenerator] %d véhicule(s) assignés sur %d routes disponibles"),
+		VehicleCount, RoutePool.Num());
 }
 
 void ARoadGenerator::ForceAssignRoutes()

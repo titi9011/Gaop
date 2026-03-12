@@ -1,6 +1,7 @@
 #include "Vehicle/GOAPVehicle.h"
 #include "Controllers/GOAPVehicleController.h"
 #include "Components/StaticMeshComponent.h"
+#include "DrawDebugHelpers.h"
 
 AGOAPVehicle::AGOAPVehicle()
 {
@@ -32,6 +33,31 @@ void AGOAPVehicle::Tick(float DeltaTime)
 
 	FVector Delta = GetActorForwardVector() * CurrentSpeed * DeltaTime;
 	AddActorWorldOffset(Delta, true); // sweep=true → collisions détectées
+
+#if ENABLE_DRAW_DEBUG
+	// ── Debug waypoints ─────────────────────────────────────────────────────
+	const UWorld* W = GetWorld();
+	for (int32 i = 0; i < Waypoints.Num(); ++i)
+	{
+		if (!Waypoints[i]) continue;
+		const FVector Loc = Waypoints[i]->GetActorLocation() + FVector(0.f, 0.f, 50.f);
+
+		FColor Color = FColor::White;
+		if (i == CurrentWaypointIndex)     Color = FColor::Yellow;  // prochain waypoint
+		if (i == DestinationWaypointIndex) Color = FColor::Green;   // destination finale
+
+		DrawDebugSphere(W, Loc, 60.f, 8, Color, false, 0.f);
+		DrawDebugString(W, Loc + FVector(0.f, 0.f, 70.f), FString::FromInt(i), nullptr, Color, 0.f, true);
+	}
+	// Ligne véhicule → destination
+	if (Waypoints.IsValidIndex(DestinationWaypointIndex) && Waypoints[DestinationWaypointIndex])
+	{
+		DrawDebugLine(W,
+			GetActorLocation() + FVector(0.f, 0.f, 50.f),
+			Waypoints[DestinationWaypointIndex]->GetActorLocation() + FVector(0.f, 0.f, 50.f),
+			FColor::Green, false, 0.f, 0, 3.f);
+	}
+#endif
 }
 
 // ── Interface actions GOAP ──────────────────────────────────────────────────
